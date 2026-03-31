@@ -291,3 +291,8 @@ __pycache__/
 *.btm.cs
 *.odx.cs
 *.xsd.cs
+
+# Docker / API runtime
+.env
+outputs/
+logs/

@@ -1,0 +1,45 @@
+version: "3.8"
+
+# =============================================================================
+# QuadriFlow API — Docker Compose
+#
+# Quad-dominant remeshing service.
+#
+# Quick start:
+#   cp .env.example .env
+#   $EDITOR .env                    # set paths for THIS machine
+#   docker compose up -d
+#
+# Build:
+#   docker compose build
+#
+# Logs:
+#   docker compose logs -f
+#
+# Swagger UI:
+#   http://localhost:8200/docs
+# =============================================================================
+
+services:
+  quadriflow-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        http_proxy: "${HTTP_PROXY:-}"
+        https_proxy: "${HTTPS_PROXY:-}"
+        no_proxy: "localhost,127.0.0.1"
+
+    container_name: quadriflow-api
+
+    ports:
+      - "${QUADRIFLOW_PORT:-8200}:8200"
+
+    volumes:
+      - ${QUADRIFLOW_OUTPUT_PATH:-./outputs}:/app/outputs:rw
+      - ./logs:/app/logs
+
+    environment:
+      - OUTPUT_TTL_SECONDS=${OUTPUT_TTL_SECONDS:-86400}
+
+    restart: unless-stopped
