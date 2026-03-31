@@ -291,20 +291,30 @@ async def remesh(
 
             result = await run_in_threadpool(run_quadriflow)
 
-        # Log stdout/stderr
+        # Log stdout/stderr and save to job dir for debugging
         if result.stdout:
             logger.info(f"[{request_id}] stdout:\n{result.stdout}")
         if result.stderr:
             logger.warning(f"[{request_id}] stderr:\n{result.stderr}")
+        for name, content in [("stdout.log", result.stdout), ("stderr.log", result.stderr)]:
+            if content:
+                with open(os.path.join(tmp_job_dir, name), "w") as f:
+                    f.write(content)
 
         if result.returncode != 0:
-            raise subprocess.CalledProcessError(
-                result.returncode, cmd, result.stdout, result.stderr
+            raise RuntimeError(
+                f"QuadriFlow exited with code {result.returncode}.\n"
+                f"--- stdout ---\n{result.stdout or '(empty)'}\n"
+                f"--- stderr ---\n{result.stderr or '(empty)'}"
             )
 
         # 4. Verify output exists
         if not os.path.exists(tmp_output):
-            raise RuntimeError("QuadriFlow completed but output file was not created.")
+            raise RuntimeError(
+                f"QuadriFlow returned exit code 0 but output file was not created.\n"
+                f"--- stdout ---\n{result.stdout or '(empty)'}\n"
+                f"--- stderr ---\n{result.stderr or '(empty)'}"
+            )
 
         output_size_mb = os.path.getsize(tmp_output) / (1024 * 1024)
         logger.info(f"[{request_id}] Output: output.obj ({output_size_mb:.2f} MB)")
